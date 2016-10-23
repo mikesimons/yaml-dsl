@@ -1,0 +1,12 @@
+hash: 4d526d79fec0b3f07df4c61ec3560f38f66cf05c3e10899363bcdf13ca0ed087
+updated: 2016-10-23T22:40:54.9294369+01:00
+imports:
+- name: github.com/mitchellh/go-mruby
+  version: 7599fc28fdd7852bf3fb6edcb5b4273e6e0eb7e5
+- name: github.com/mitchellh/mapstructure
+  version: f3009df150dadf309fdee4a54ed65c124afad715
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+testImports: []

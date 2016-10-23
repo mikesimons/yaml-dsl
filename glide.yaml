@@ -1,0 +1,7 @@
+package: github.com/mikesimons/yaml-dsl
+import:
+- package: github.com/mitchellh/go-mruby
+- package: github.com/mitchellh/mapstructure
+- package: github.com/pkg/errors
+  version: ^0.8.0
+- package: gopkg.in/yaml.v2
