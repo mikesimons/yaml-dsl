@@ -1,16 +1,17 @@
 package main
 
 import (
-    "fmt"
-    shellAction "github.com/mikesimons/yaml-dsl/actions/shell"
-    taskAction "github.com/mikesimons/yaml-dsl/actions/task"
-    "github.com/mikesimons/yaml-dsl/dsl"
-    "github.com/mikesimons/yaml-dsl/scripting"
-    "github.com/mikesimons/yaml-dsl/types"
-    "gopkg.in/yaml.v2"
-    "io/ioutil"
-    "log"
-    "os"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+
+	shellAction "github.com/mikesimons/yaml-dsl/actions/shell"
+	testAction "github.com/mikesimons/yaml-dsl/actions/test"
+	"github.com/mikesimons/yaml-dsl/dsl"
+	scripting "github.com/mikesimons/yaml-dsl/scripting"
+	"github.com/mikesimons/yaml-dsl/types"
+	"gopkg.in/yaml.v2"
 )
 
 /**
@@ -32,32 +33,33 @@ Dependencies will be implemented as includes? How to name them?
 type Config map[string]Task
 
 type Task struct {
-    RawActions types.RawActionList `yaml:"actions"`
+	RawActions types.RawActionList `yaml:"actions"`
 }
 
 func main() {
-    config := make(Config)
+	config := make(Config)
 
-    f, _ := os.Open("config.yml")
-    bytes, _ := ioutil.ReadAll(f)
-    yaml.Unmarshal(bytes, &config)
+	f, _ := os.Open("config.yml")
+	bytes, _ := ioutil.ReadAll(f)
+	yaml.Unmarshal(bytes, &config)
 
-    engine := dsl.New()
-    engine.AddScriptParser(scripting.NewMrubyScriptParser())
-    engine.AddActionType(taskAction.Type)
-    engine.AddActionType(shellAction.Type)
+	engine := dsl.New()
+	engine.ScriptParser = scripting.NewMrubyScriptParser()
+	engine.Handlers["shell"] = shellAction.Execute
+	engine.Handlers["test"] = testAction.Execute
 
-    for name, task := range config {
-        actions, err := engine.ProcessRawActions(&task.RawActions)
-        if err != nil {
-            log.Fatalf("%#v", err)
-        }
-        engine.AddTask(name, actions)
-    }
+	tasks := make(map[string]*dsl.ActionList)
+	for name, task := range config {
+		actions, err := engine.ProcessRawActions(&task.RawActions)
+		if err != nil {
+			log.Fatalf("%#v", err)
+		}
+		tasks[name] = actions
+	}
 
-    engine.GetTask("install-docker").Execute()
+	tasks["install-docker"].Execute()
 }
 
 func toString(v interface{}) string {
-    return fmt.Sprintf("%v", v)
+	return fmt.Sprintf("%v", v)
 }

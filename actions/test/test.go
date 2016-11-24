@@ -1,4 +1,4 @@
-package shell
+package test
 
 import (
 	"fmt"
@@ -8,13 +8,13 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type ShellAction struct {
+type TestAction struct {
 	dsl.CommonAction `mapstructure:",squash"`
-	Command          string `mapstructure:"shell"`
+	Test             string `mapstructure:"test"`
 }
 
 func Execute(raw types.RawAction, dsl *dsl.Dsl) error {
-	action := &ShellAction{}
+	action := &TestAction{}
 	dsl.Decode(raw, func(config *mapstructure.DecoderConfig) {
 		config.Result = &action
 	})

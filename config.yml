@@ -5,10 +5,13 @@ install-docker:
       shell: "Download docker.tgz"
 
     - name: "Extract file"
-      shell: "tar xf file"
-      with_items: "test"
+      test: 'tar xf xyz #{"item"}'
+      with_items: '"xxx".split("")'
 
 provision-docker-storage:
   actions:
-    - name: "rm -rf /"
+    - name: "one"
       shell: "rm -rf /"
+      with_items:
+        - "x"
+        - "y"

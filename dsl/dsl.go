@@ -1,97 +1,94 @@
 package dsl
 
 import (
-    "github.com/mikesimons/yaml-dsl/types"
-    "github.com/pkg/errors"
-    "gopkg.in/yaml.v2"
-    "io"
-    "io/ioutil"
-    "os"
+	"fmt"
+	"reflect"
+
+	"github.com/mikesimons/yaml-dsl/types"
+	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
+	//"fmt"
 )
 
-type factoryFn func(data map[string]interface{}, dsl *Dsl) (string, Action, error)
+type HandlerFunc func(raw types.RawAction, dsl *Dsl) error
 
 type Dsl struct {
-    factories    map[string]factoryFn
-    tasks        map[string]*ActionList
-    scriptParser *types.ScriptParser
+	Handlers     map[string]HandlerFunc
+	ScriptParser types.ScriptParser
+}
+
+type Action struct {
+	Handler HandlerFunc
+	Data    types.RawAction
 }
 
 func New() *Dsl {
-    return &Dsl{
-        factories: make(map[string]factoryFn),
-        tasks:     make(map[string]*ActionList),
-    }
-}
-
-func (dsl *Dsl) AddActionType(f factoryFn) {
-    key, _, _ := f(make(map[string]interface{}), dsl)
-    dsl.factories[key] = f
-}
-
-func (dsl *Dsl) AddTask(name string, actions *ActionList) {
-    dsl.tasks[name] = actions
-}
-
-func (dsl *Dsl) GetTask(name string) *ActionList {
-    return dsl.tasks[name]
-}
-
-func (dsl *Dsl) LoadActionsFromFile(file string) (*ActionList, error) {
-    reader, err := os.Open(file)
-    if err != nil {
-        return nil, errors.Wrap(err, "Unable to open file")
-    }
-
-    return dsl.LoadActionsFromReader(reader)
-}
-
-func (dsl *Dsl) LoadActionsFromReader(in io.Reader) (*ActionList, error) {
-    data, err := ioutil.ReadAll(in)
-
-    if err != nil {
-        return nil, errors.Wrap(err, "Unable to read file")
-    }
-
-    raw := make(types.RawActionList, 0)
-    err = yaml.Unmarshal(data, &raw)
-
-    if err != nil {
-        return nil, errors.Wrap(err, "Unable to parse YAML")
-    }
-
-    return dsl.ProcessRawActions(&raw)
+	return &Dsl{
+		Handlers: make(map[string]HandlerFunc),
+	}
 }
 
 func (dsl *Dsl) ProcessRawActions(raw *types.RawActionList) (*ActionList, error) {
-    out := &ActionList{}
-    for _, rawAction := range *raw {
-        var action Action
-        var err error
+	out := &ActionList{
+		Dsl: dsl,
+	}
 
-        for key := range rawAction {
-            if factoryFn, ok := dsl.factories[key]; ok {
-                _, action, err = factoryFn(rawAction, dsl)
-            }
+	for _, rawAction := range *raw {
+		var action Action
 
-            if err != nil {
-                return nil, errors.Wrap(err, "failed to process raw actions")
-            }
-        }
+		for key := range rawAction {
+			if handlerFn, ok := dsl.Handlers[key]; ok {
+				action = Action{
+					Handler: handlerFn,
+					Data:    rawAction,
+				}
+				break
+			}
+		}
 
-        if action != nil {
-            out.PushBack(action)
-        }
-    }
-    return out, nil
+		if action.Handler == nil {
+			fmt.Printf("Warning: Could not match action to a handler - %#v\n", rawAction)
+		}
+
+		if action.Handler != nil {
+			out.PushBack(action)
+		}
+	}
+	return out, nil
 }
 
-func (dsl *Dsl) ScriptParser() *types.ScriptParser {
-    return dsl.scriptParser
+func (dsl *Dsl) Decode(raw types.RawAction, fn func(*mapstructure.DecoderConfig)) error {
+	config := &mapstructure.DecoderConfig{
+		WeaklyTypedInput: true,
+		DecodeHook:       dsl.scriptDecodeHook(),
+	}
+
+	fn(config)
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		panic(err)
+	}
+
+	err = decoder.Decode(raw)
+
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("shell action could not be parsed from %#v", raw))
+	}
+
+	return nil
 }
 
-func (dsl *Dsl) NewAction() BaseAction {
-    return BaseAction{
-        _state: dsl,
-    }
+func (dsl *Dsl) scriptDecodeHook() mapstructure.DecodeHookFunc {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+
+		return dsl.ScriptParser.Parse(data.(string))
+	}
 }
