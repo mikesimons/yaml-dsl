@@ -1,6 +1,8 @@
 package dsl
 
 import (
+	"reflect"
+
 	"github.com/mikesimons/yaml-dsl/types"
 	"github.com/mitchellh/go-mruby"
 	//"fmt"
@@ -8,27 +10,37 @@ import (
 
 type MrubyScriptParser struct {
 	mrb  *mruby.Mrb
-	vars map[string]interface{}
+	vars *mruby.MrbValue
 }
 
 func NewMrubyScriptParser() types.ScriptParser {
+	mrb := mruby.NewMrb()
+	vs, _ := mrb.LoadString(`OpenStruct.new`)
+
 	return &MrubyScriptParser{
-		mrb:  mruby.NewMrb(),
-		vars: make(map[string]interface{}),
+		mrb:  mrb,
+		vars: vs,
 	}
 }
 
 func (msp *MrubyScriptParser) SetVars(vars map[string]interface{}) {
-	msp.vars = vars
+
+	for key, val := range vars {
+		valValue := reflect.ValueOf(val)
+		switch valValue.Kind() {
+		case reflect.String:
+			msp.vars.Call("[]=", msp.mrb.StringValue(key), msp.mrb.StringValue(val.(string)))
+		}
+	}
 }
 
 func (msp *MrubyScriptParser) ParseList(script string) (interface{}, error) {
-	proc, err := msp.mrb.LoadString(`Proc.new { |val| eval(val) }`)
+	proc, err := msp.mrb.LoadString(`Proc.new { |val, vars| vars.instance_eval(val) }`)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	result, err := proc.Call("call", msp.mrb.StringValue(script))
+	result, err := proc.Call("call", msp.mrb.StringValue(script), msp.vars)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -39,18 +51,17 @@ func (msp *MrubyScriptParser) ParseList(script string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return ret, nil
 }
 
 func (msp *MrubyScriptParser) Parse(script string) (interface{}, error) {
-	proc, err := msp.mrb.LoadString(`Proc.new { |val| eval("\"#{val}\"") }`)
+	proc, err := msp.mrb.LoadString(`Proc.new { |val, vars| vars.instance_eval("\"#{val}\"") }`)
 
 	if err != nil {
 		panic(err.Error())
 	}
 
-	result, err := proc.Call("call", msp.mrb.StringValue(script))
+	result, err := proc.Call("call", msp.mrb.StringValue(script), msp.vars)
 	if err != nil {
 		panic(err.Error())
 	}

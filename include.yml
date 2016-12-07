@@ -1,5 +1,0 @@
-- name: Included1
-  x: y
-
-- name: Included2
-  y: x

@@ -3,9 +3,10 @@ install-docker:
   actions:
     - name: "Get file"
       shell: "Download docker.tgz"
+      register: moobar
 
     - name: "Extract file"
-      test: 'tar xf xyz #{"item"}'
+      test: 'tar xf xyz #{item}'
       with_items: '"xxx".split("")'
 
 provision-docker-storage:

@@ -10,6 +10,7 @@ MRuby::Build.new do |conf|
 
   conf.gembox 'full-core'
   conf.gem :git => 'https://github.com/jbreeden/mruby-erb.git'
+  conf.gem :git => 'https://github.com/ksss/mruby-ostruct.git'
 
   # See https://github.com/mruby/mruby/blob/master/doc/guides/mrbgems.md for more about mrbgems
 
