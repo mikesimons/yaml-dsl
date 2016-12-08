@@ -1,4 +1,4 @@
-package dsl
+package scripting
 
 import (
 	"reflect"
@@ -23,24 +23,35 @@ func NewMrubyScriptParser() types.ScriptParser {
 	}
 }
 
+func (msp *MrubyScriptParser) SetVar(key string, val interface{}) {
+	valValue := reflect.ValueOf(val)
+	switch valValue.Kind() {
+	case reflect.String:
+		msp.vars.Call("[]=", msp.mrb.StringValue(key), msp.mrb.StringValue(val.(string)))
+	}
+}
+
 func (msp *MrubyScriptParser) SetVars(vars map[string]interface{}) {
-
 	for key, val := range vars {
-		valValue := reflect.ValueOf(val)
-		switch valValue.Kind() {
-		case reflect.String:
-			msp.vars.Call("[]=", msp.mrb.StringValue(key), msp.mrb.StringValue(val.(string)))
-		}
+		msp.SetVar(key, val)
 	}
 }
 
-func (msp *MrubyScriptParser) ParseList(script string) (interface{}, error) {
-	proc, err := msp.mrb.LoadString(`Proc.new { |val, vars| vars.instance_eval(val) }`)
+func (msp *MrubyScriptParser) ParseExpression(script string) (interface{}, error) {
+	return msp.eval(`Proc.new { |val, vars| vars.instance_eval(val) }`, script)
+}
+
+func (msp *MrubyScriptParser) ParseEmbedded(script string) (interface{}, error) {
+	return msp.eval(`Proc.new { |val, vars| vars.instance_eval("\"#{val}\"") }`, script)
+}
+
+func (msp *MrubyScriptParser) eval(context string, eval string) (interface{}, error) {
+	proc, err := msp.mrb.LoadString(context)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	result, err := proc.Call("call", msp.mrb.StringValue(script), msp.vars)
+	result, err := proc.Call("call", msp.mrb.StringValue(eval), msp.vars)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -51,28 +62,5 @@ func (msp *MrubyScriptParser) ParseList(script string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ret, nil
-}
-
-func (msp *MrubyScriptParser) Parse(script string) (interface{}, error) {
-	proc, err := msp.mrb.LoadString(`Proc.new { |val, vars| vars.instance_eval("\"#{val}\"") }`)
-
-	if err != nil {
-		panic(err.Error())
-	}
-
-	result, err := proc.Call("call", msp.mrb.StringValue(script), msp.vars)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	var ret interface{}
-	err = mruby.Decode(&ret, result)
-
-	if err != nil {
-		panic(err.Error())
-		return nil, err
-	}
-
 	return ret, nil
 }
