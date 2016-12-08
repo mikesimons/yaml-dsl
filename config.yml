@@ -2,12 +2,14 @@ install-docker:
   unless: :docker.in_executable_path?
   actions:
     - name: "Get file"
-      shell: "Download docker.tgz"
-      register: moobar
+      shell: "Download docker.#{item}.tgz"
+      with_items:
+        - "x"
+        - "y"
 
     - name: "Extract file"
-      test: 'tar xf xyz #{item}'
-      with_items: '"xxx".split("")'
+      test: 'tar xf xyz item'
+      with_items: '"xxxxxxxx".split("")'
 
 provision-docker-storage:
   actions:

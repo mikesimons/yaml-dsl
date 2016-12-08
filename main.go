@@ -8,8 +8,10 @@ import (
 
 	shellAction "github.com/mikesimons/yaml-dsl/actions/shell"
 	testAction "github.com/mikesimons/yaml-dsl/actions/test"
-	"github.com/mikesimons/yaml-dsl/dsl"
-	scripting "github.com/mikesimons/yaml-dsl/scripting"
+	parserpkg "github.com/mikesimons/yaml-dsl/parser"
+	"github.com/mikesimons/yaml-dsl/parser/middleware"
+	"github.com/mikesimons/yaml-dsl/parser/middleware/withitems"
+	"github.com/mikesimons/yaml-dsl/scripting"
 	"github.com/mikesimons/yaml-dsl/types"
 	"gopkg.in/yaml.v2"
 )
@@ -33,7 +35,7 @@ Dependencies will be implemented as includes? How to name them?
 type Config map[string]Task
 
 type Task struct {
-	RawActions types.RawActionList `yaml:"actions"`
+	UnparsedActions types.UnparsedActionList `yaml:"actions"`
 }
 
 func main() {
@@ -43,19 +45,23 @@ func main() {
 	bytes, _ := ioutil.ReadAll(f)
 	yaml.Unmarshal(bytes, &config)
 
-	engine := dsl.New()
-	engine.ScriptParser = scripting.NewMrubyScriptParser()
-	engine.Handlers["shell"] = shellAction.Execute
-	engine.Handlers["test"] = testAction.Execute
+	tasks := make(map[string]*parserpkg.ActionList)
 
-	tasks := make(map[string]*dsl.ActionList)
+	parser := parserpkg.New()
+	parser.ScriptParser = scripting.NewMrubyScriptParser()
+	parser.Handlers["shell"] = shellAction.Prototype
+	parser.Handlers["test"] = testAction.Prototype
+
 	for name, task := range config {
-		actions, err := engine.ProcessRawActions(&task.RawActions)
+		actions, err := parser.ParseActions(&task.UnparsedActions)
 		if err != nil {
 			log.Fatalf("%#v", err)
 		}
 		tasks[name] = actions
 	}
+
+	tasks["install-docker"].Middlewares = &middleware.Chain{DecodeFunc: parser.Decode}
+	tasks["install-docker"].Middlewares.Add(&withitems.Middleware{Dsl: parser})
 
 	tasks["install-docker"].Execute()
 }

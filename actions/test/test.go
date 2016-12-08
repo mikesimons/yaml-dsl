@@ -3,23 +3,20 @@ package test
 import (
 	"fmt"
 
-	"github.com/mikesimons/yaml-dsl/dsl"
+	"github.com/mikesimons/yaml-dsl/parser"
 	"github.com/mikesimons/yaml-dsl/types"
-	"github.com/mitchellh/mapstructure"
 )
 
 type TestAction struct {
-	dsl.CommonAction `mapstructure:",squash"`
-	Test             string `mapstructure:"test"`
+	parser.CommonAction `mapstructure:",squash"`
+	Test                string `mapstructure:"test"`
 }
 
-func Execute(raw types.RawAction, dsl *dsl.Dsl) error {
-	action := &TestAction{}
-	dsl.Decode(raw, func(config *mapstructure.DecoderConfig) {
-		config.Result = &action
-	})
+func Prototype() types.Handler {
+	return &TestAction{}
+}
 
+func (action *TestAction) Execute() (*types.ActionResult, error) {
 	fmt.Printf("%#v\n", action)
-
-	return nil
+	return &types.ActionResult{}, nil
 }

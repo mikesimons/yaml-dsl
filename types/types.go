@@ -1,10 +1,30 @@
 package types
 
-type RawAction map[string]interface{}
-type RawActionList []RawAction
+type UnparsedAction map[string]interface{}
+type UnparsedActionList []UnparsedAction
 
 type ScriptParser interface {
-	Parse(script string) (interface{}, error)
-	ParseList(script string) (interface{}, error)
+	ParseEmbedded(script string) (interface{}, error)
+	ParseExpression(script string) (interface{}, error)
 	SetVars(vars map[string]interface{})
+	SetVar(key string, val interface{})
+}
+
+type ActionResult struct {
+	Success bool
+	Result  map[string]interface{}
+}
+
+type HandlerPrototypeFunc func() Handler
+type Handler interface {
+	Execute() (*ActionResult, error)
+}
+
+type Middleware interface {
+	Execute(action Action, vars map[string]interface{}) (*ActionResult, error)
+}
+
+type Action struct {
+	Handler HandlerPrototypeFunc
+	Data    UnparsedAction
 }

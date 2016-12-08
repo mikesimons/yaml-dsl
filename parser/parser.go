@@ -1,4 +1,4 @@
-package dsl
+package parser
 
 import (
 	"fmt"
@@ -10,44 +10,37 @@ import (
 	//"fmt"
 )
 
-type HandlerFunc func(raw types.RawAction, dsl *Dsl) error
-
 type Dsl struct {
-	Handlers     map[string]HandlerFunc
+	Handlers     map[string]types.HandlerPrototypeFunc
 	ScriptParser types.ScriptParser
-}
-
-type Action struct {
-	Handler HandlerFunc
-	Data    types.RawAction
 }
 
 func New() *Dsl {
 	return &Dsl{
-		Handlers: make(map[string]HandlerFunc),
+		Handlers: make(map[string]types.HandlerPrototypeFunc),
 	}
 }
 
-func (dsl *Dsl) ProcessRawActions(raw *types.RawActionList) (*ActionList, error) {
+func (dsl *Dsl) ParseActions(unparsedList *types.UnparsedActionList) (*ActionList, error) {
 	out := &ActionList{
 		Dsl: dsl,
 	}
 
-	for _, rawAction := range *raw {
-		var action Action
+	for _, unparsedAction := range *unparsedList {
+		var action types.Action
 
-		for key := range rawAction {
-			if handlerFn, ok := dsl.Handlers[key]; ok {
-				action = Action{
-					Handler: handlerFn,
-					Data:    rawAction,
+		for key := range unparsedAction {
+			if protoFunc, ok := dsl.Handlers[key]; ok {
+				action = types.Action{
+					Handler: protoFunc,
+					Data:    unparsedAction,
 				}
 				break
 			}
 		}
 
 		if action.Handler == nil {
-			fmt.Printf("Warning: Could not match action to a handler - %#v\n", rawAction)
+			fmt.Printf("Warning: Could not match action to a handler - %#v\n", unparsedAction)
 		}
 
 		if action.Handler != nil {
@@ -57,7 +50,7 @@ func (dsl *Dsl) ProcessRawActions(raw *types.RawActionList) (*ActionList, error)
 	return out, nil
 }
 
-func (dsl *Dsl) Decode(raw types.RawAction, fn func(*mapstructure.DecoderConfig)) error {
+func (dsl *Dsl) Decode(raw types.UnparsedAction, fn func(*mapstructure.DecoderConfig)) error {
 	config := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
 		DecodeHook:       dsl.scriptDecodeHook(),
@@ -89,6 +82,6 @@ func (dsl *Dsl) scriptDecodeHook() mapstructure.DecodeHookFunc {
 			return data, nil
 		}
 
-		return dsl.ScriptParser.Parse(data.(string))
+		return dsl.ScriptParser.ParseEmbedded(data.(string))
 	}
 }
