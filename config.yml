@@ -8,8 +8,9 @@ install-docker:
         - "y"
 
     - name: "Extract file"
-      test: 'tar xf xyz item'
-      with_items: '"xxxxxxxx".split("")'
+      test: 'tar xf xyz #{item}'
+      with_items: >
+        "item1,item2,item3".split(",")
 
 provision-docker-storage:
   actions:
