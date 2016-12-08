@@ -9,7 +9,6 @@ import (
 	shellAction "github.com/mikesimons/yaml-dsl/actions/shell"
 	testAction "github.com/mikesimons/yaml-dsl/actions/test"
 	parserpkg "github.com/mikesimons/yaml-dsl/parser"
-	"github.com/mikesimons/yaml-dsl/parser/middleware"
 	"github.com/mikesimons/yaml-dsl/parser/middleware/withitems"
 	"github.com/mikesimons/yaml-dsl/scripting"
 	"github.com/mikesimons/yaml-dsl/types"
@@ -49,19 +48,19 @@ func main() {
 
 	parser := parserpkg.New()
 	parser.ScriptParser = scripting.NewMrubyScriptParser()
+	parser.Middleware = []types.Middleware{
+		&withitems.Middleware{Dsl: parser},
+	}
 	parser.Handlers["shell"] = shellAction.Prototype
 	parser.Handlers["test"] = testAction.Prototype
 
 	for name, task := range config {
-		actions, err := parser.ParseActions(&task.UnparsedActions)
+		actions, err := parser.Parse(&task.UnparsedActions)
 		if err != nil {
 			log.Fatalf("%#v", err)
 		}
 		tasks[name] = actions
 	}
-
-	tasks["install-docker"].Middlewares = &middleware.Chain{DecodeFunc: parser.Decode}
-	tasks["install-docker"].Middlewares.Add(&withitems.Middleware{Dsl: parser})
 
 	tasks["install-docker"].Execute()
 }
