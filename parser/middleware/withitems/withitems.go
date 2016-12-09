@@ -5,19 +5,29 @@ import (
 	"reflect"
 
 	"github.com/mikesimons/yaml-dsl/parser"
+	"github.com/mikesimons/yaml-dsl/parser/middleware"
 	"github.com/mikesimons/yaml-dsl/types"
-	"github.com/mitchellh/mapstructure"
+	//"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
+// Middleware implements an iterating mechanism for actions
 type Middleware struct {
 	Dsl     *parser.Dsl
 	Key     string
 	ItemKey string
 }
 
-func (wim *Middleware) Execute(action types.Action, vars map[string]interface{}) (*types.ActionResult, error) {
+// Execute runs the given action for a list of items.
+// The list is taken from the `with_items` field of the action data.
+// `with_items` may also be a script expression that returns a list.
+// As the list is iterated, the current value will be set in the variable `item`.
+//
+// The key `with_items` may be changed by setting the `Key` field.
+// The item var `item` may be changed by setting the `ItemKey` field.
+func (wim *Middleware) Execute(action types.Action, vars map[string]interface{}, chain middleware.Chain) (*types.ActionResult, error) {
 
+	// Key defaults
 	middlewareKey := wim.Key
 	if middlewareKey == "" {
 		middlewareKey = "with_items"
@@ -28,6 +38,7 @@ func (wim *Middleware) Execute(action types.Action, vars map[string]interface{})
 		itemKey = "item"
 	}
 
+	// Get the list
 	var items []interface{}
 	if rawItems, hasItems := action.Data[middlewareKey]; hasItems {
 		value := reflect.ValueOf(rawItems)
@@ -41,7 +52,7 @@ func (wim *Middleware) Execute(action types.Action, vars map[string]interface{})
 		case reflect.Slice:
 			items = rawItems.([]interface{})
 		default:
-			// Should raise an error here
+			return nil, errors.New(fmt.Sprintf("invalid type for `%s` field", middlewareKey))
 		}
 	}
 
@@ -49,9 +60,9 @@ func (wim *Middleware) Execute(action types.Action, vars map[string]interface{})
 		items = append(items, "")
 	}
 
+	// Iterate the list
 	var results []*types.ActionResult
 	for _, v := range items {
-		instance := action.Handler()
 
 		item, err := wim.Dsl.ScriptParser.ParseEmbedded(v.(string))
 		if err != nil {
@@ -59,11 +70,8 @@ func (wim *Middleware) Execute(action types.Action, vars map[string]interface{})
 		}
 		wim.Dsl.ScriptParser.SetVar(itemKey, item)
 
-		wim.Dsl.Decode(action.Data, func(config *mapstructure.DecoderConfig) {
-			config.Result = instance
-		})
+		result, err := chain.Next(action, vars)
 
-		result, err := instance.Execute()
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("error executing action: %s", action))
 		}

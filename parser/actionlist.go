@@ -7,17 +7,10 @@ import (
 	"github.com/mikesimons/yaml-dsl/types"
 )
 
-type CommonAction struct {
-	Name     string `mapstructure:"name"`
-	Register string `mapstructure:"register"`
-	When     string `mapstructure:"when"`
-	Unless   string `mapstructure:"unless"`
-}
-
 type ActionList struct {
 	list.List
-	Dsl         *Dsl
-	Middlewares *middleware.Chain
+	Dsl        *Dsl
+	Middleware middleware.Chain
 }
 
 func (list *ActionList) InsertListAfter(otherList *ActionList, element *list.Element) {
@@ -32,8 +25,8 @@ func (list *ActionList) Execute() error {
 
 	for current := list.Front(); current != nil; current = current.Next() {
 		action := current.Value.(types.Action)
-		list.Middlewares.Next(action, vars)
-		list.Middlewares.Reset()
+		list.Middleware.Next(action, vars)
+		list.Middleware.Reset()
 	}
 
 	return nil

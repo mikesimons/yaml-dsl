@@ -9,6 +9,7 @@ import (
 	shellAction "github.com/mikesimons/yaml-dsl/actions/shell"
 	testAction "github.com/mikesimons/yaml-dsl/actions/test"
 	parserpkg "github.com/mikesimons/yaml-dsl/parser"
+	"github.com/mikesimons/yaml-dsl/parser/middleware"
 	"github.com/mikesimons/yaml-dsl/parser/middleware/withitems"
 	"github.com/mikesimons/yaml-dsl/scripting/mrubyparser"
 	"github.com/mikesimons/yaml-dsl/types"
@@ -48,7 +49,7 @@ func main() {
 
 	parser := parserpkg.New()
 	parser.ScriptParser = mrubyparser.New()
-	parser.Middleware = []types.Middleware{
+	parser.Middleware = []middleware.Middleware{
 		&withitems.Middleware{Dsl: parser},
 	}
 	parser.Handlers["shell"] = shellAction.Prototype

@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/mikesimons/yaml-dsl/parser/middleware"
 	"github.com/mikesimons/yaml-dsl/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
-	"github.com/mikesimons/yaml-dsl/parser/middleware"
 )
 
 type Dsl struct {
 	Handlers     map[string]types.HandlerPrototypeFunc
 	ScriptParser types.ScriptParser
-	Middleware   []types.Middleware
+	Middleware   []middleware.Middleware
 }
 
 func New() *Dsl {
@@ -25,7 +25,7 @@ func New() *Dsl {
 func (dsl *Dsl) Parse(unparsedList *types.UnparsedActionList) (*ActionList, error) {
 	out := &ActionList{
 		Dsl: dsl,
-		Middlewares: &middleware.Chain{
+		Middleware: middleware.Chain{
 			Middleware: dsl.Middleware,
 			DecodeFunc: dsl.Decode,
 		},

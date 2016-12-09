@@ -5,20 +5,21 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// Chain implements a simple middleware iterator
 type Chain struct {
-	position    int
-	Middleware []types.Middleware
-	DecodeFunc  func(raw types.UnparsedAction, fn func(*mapstructure.DecoderConfig)) error
+	position   int
+	Middleware []Middleware
+	DecodeFunc func(raw types.UnparsedAction, fn func(*mapstructure.DecoderConfig)) error
 }
 
+// Reset resets the chain position back to the start
 func (chain *Chain) Reset() {
 	chain.position = 0
 }
 
+// Next executes the next middleware in the chain or the action itself if we are at the end of the chain
+// Calling `Next` once the action has been executed will result in a panic
 func (chain *Chain) Next(action types.Action, vars map[string]interface{}) (*types.ActionResult, error) {
-	defer func() {
-		chain.position += 1
-	}()
 
 	if chain.position == len(chain.Middleware) {
 		instance := action.Handler()
@@ -32,5 +33,7 @@ func (chain *Chain) Next(action types.Action, vars map[string]interface{}) (*typ
 		panic("Middleware chain beyond bounds")
 	}
 
-	return chain.Middleware[chain.position].Execute(action, vars)
+	position := chain.position
+	chain.position++
+	return chain.Middleware[position].Execute(action, vars, *chain)
 }

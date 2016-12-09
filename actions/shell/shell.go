@@ -3,12 +3,11 @@ package shell
 import (
 	"fmt"
 
-	"github.com/mikesimons/yaml-dsl/parser"
 	"github.com/mikesimons/yaml-dsl/types"
 )
 
 type ShellAction struct {
-	parser.CommonAction `mapstructure:",squash"`
+	*types.ActionCommon `mapstructure:",squash"`
 	Command             string `mapstructure:"shell"`
 }
 
