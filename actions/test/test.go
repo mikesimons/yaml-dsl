@@ -2,6 +2,8 @@ package test
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/mikesimons/yaml-dsl/parser"
 	"github.com/mikesimons/yaml-dsl/types"
@@ -10,6 +12,7 @@ import (
 type TestAction struct {
 	parser.CommonAction `mapstructure:",squash"`
 	Test                string `mapstructure:"test"`
+	Stdout              io.Writer
 }
 
 func Prototype() types.Handler {
@@ -17,6 +20,11 @@ func Prototype() types.Handler {
 }
 
 func (action *TestAction) Execute() (*types.ActionResult, error) {
-	fmt.Printf("%#v\n", action)
-	return &types.ActionResult{}, nil
+	stdout := action.Stdout
+	if stdout == nil {
+		stdout = os.Stdout
+	}
+
+	fmt.Fprintf(stdout, "%#v\n", action)
+	return &types.ActionResult{Success: true}, nil
 }
