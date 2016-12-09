@@ -16,21 +16,27 @@ type Middleware struct {
 	ItemKey string
 }
 
-func New(dsl *parser.Dsl) *Middleware {
-	return &Middleware{
-		Dsl:     dsl,
-		Key:     "with_items",
-		ItemKey: "item",
-	}
-}
-
 func (wim *Middleware) Execute(action types.Action, vars map[string]interface{}) (*types.ActionResult, error) {
+
+	middlewareKey := wim.Key
+	if middlewareKey == "" {
+		middlewareKey = "with_items"
+	}
+
+	itemKey := wim.ItemKey
+	if itemKey == "" {
+		itemKey = "item"
+	}
+
 	var items []interface{}
-	if rawItems, hasItems := action.Data["with_items"]; hasItems {
+	if rawItems, hasItems := action.Data[middlewareKey]; hasItems {
 		value := reflect.ValueOf(rawItems)
 		switch value.Kind() {
 		case reflect.String:
-			result, _ := wim.Dsl.ScriptParser.ParseExpression(rawItems.(string))
+			result, err := wim.Dsl.ScriptParser.ParseExpression(rawItems.(string))
+			if err != nil {
+				return nil, errors.Wrap(err, fmt.Sprintf("error parsing expression: %s", rawItems.(string)))
+			}
 			items = result.([]interface{})
 		case reflect.Slice:
 			items = rawItems.([]interface{})
@@ -43,23 +49,28 @@ func (wim *Middleware) Execute(action types.Action, vars map[string]interface{})
 		items = append(items, "")
 	}
 
+	var results []*types.ActionResult
 	for _, v := range items {
-		item, _ := wim.Dsl.ScriptParser.ParseEmbedded(v.(string))
-		vars["item"] = item
-		wim.Dsl.ScriptParser.SetVars(vars)
-
 		instance := action.Handler()
+
+		item, err := wim.Dsl.ScriptParser.ParseEmbedded(v.(string))
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error parsing expression: %s", v.(string)))
+		}
+		wim.Dsl.ScriptParser.SetVar(itemKey, item)
+
 		wim.Dsl.Decode(action.Data, func(config *mapstructure.DecoderConfig) {
 			config.Result = instance
 		})
 
-		_, err := instance.Execute()
+		result, err := instance.Execute()
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error occured executing action: %s", action))
+			return nil, errors.Wrap(err, fmt.Sprintf("error executing action: %s", action))
 		}
+		results = append(results, result)
 	}
 
-	wim.Dsl.ScriptParser.SetVar("item", nil)
+	wim.Dsl.ScriptParser.SetVar(itemKey, "")
 
-	return &types.ActionResult{}, nil
+	return &types.ActionResult{Success: true}, nil
 }

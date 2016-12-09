@@ -14,7 +14,7 @@ Initialisation is where you configure the parser with script engine, middleware 
 
 ```go
 p := parser.New()
-p.ScriptParser = scripting.NewMrubyScriptParser()
+p.ScriptParser = mrubyparser.New()
 p.Middleware = []types.Middleware{
   &withitems.Middleware{Dsl: parser},
 }

@@ -1,4 +1,4 @@
-package scripting
+package mrubyparser
 
 import (
 	"reflect"
@@ -13,7 +13,7 @@ type MrubyScriptParser struct {
 	vars *mruby.MrbValue
 }
 
-func NewMrubyScriptParser() types.ScriptParser {
+func New() types.ScriptParser {
 	mrb := mruby.NewMrb()
 	vs, _ := mrb.LoadString(`OpenStruct.new`)
 

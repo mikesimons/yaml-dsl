@@ -10,7 +10,7 @@ import (
 	testAction "github.com/mikesimons/yaml-dsl/actions/test"
 	parserpkg "github.com/mikesimons/yaml-dsl/parser"
 	"github.com/mikesimons/yaml-dsl/parser/middleware/withitems"
-	"github.com/mikesimons/yaml-dsl/scripting"
+	"github.com/mikesimons/yaml-dsl/scripting/mrubyparser"
 	"github.com/mikesimons/yaml-dsl/types"
 	"gopkg.in/yaml.v2"
 )
@@ -47,7 +47,7 @@ func main() {
 	tasks := make(map[string]*parserpkg.ActionList)
 
 	parser := parserpkg.New()
-	parser.ScriptParser = scripting.NewMrubyScriptParser()
+	parser.ScriptParser = mrubyparser.New()
 	parser.Middleware = []types.Middleware{
 		&withitems.Middleware{Dsl: parser},
 	}
