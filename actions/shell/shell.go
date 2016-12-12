@@ -7,8 +7,8 @@ import (
 )
 
 type ShellAction struct {
-	*types.ActionCommon `mapstructure:",squash"`
-	Command             string `mapstructure:"shell"`
+	types.ActionCommon `mapstructure:",squash"`
+	Command            string `mapstructure:"shell"`
 }
 
 func Prototype() types.Handler {

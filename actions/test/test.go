@@ -10,9 +10,9 @@ import (
 
 // TestAction is a dummy action useful for testing & validation purpose
 type TestAction struct {
-	*types.ActionCommon `mapstructure:",squash"`
-	Test                string `mapstructure:"test"`
-	Stdout              io.Writer
+	types.ActionCommon `mapstructure:",squash"`
+	Test               string `mapstructure:"test"`
+	Stdout             io.Writer
 }
 
 // Prototype returns a new instance of TestAction as a Handler
