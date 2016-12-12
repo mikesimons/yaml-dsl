@@ -8,9 +8,9 @@ import (
 
 	shellAction "github.com/mikesimons/yaml-dsl/actions/shell"
 	testAction "github.com/mikesimons/yaml-dsl/actions/test"
+	"github.com/mikesimons/yaml-dsl/middleware"
+	"github.com/mikesimons/yaml-dsl/middleware/withitems"
 	parserpkg "github.com/mikesimons/yaml-dsl/parser"
-	"github.com/mikesimons/yaml-dsl/parser/middleware"
-	"github.com/mikesimons/yaml-dsl/parser/middleware/withitems"
 	"github.com/mikesimons/yaml-dsl/scripting/mrubyparser"
 	"github.com/mikesimons/yaml-dsl/types"
 	"gopkg.in/yaml.v2"

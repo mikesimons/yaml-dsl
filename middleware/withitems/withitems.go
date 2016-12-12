@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/mikesimons/yaml-dsl/middleware"
 	"github.com/mikesimons/yaml-dsl/parser"
-	"github.com/mikesimons/yaml-dsl/parser/middleware"
 	"github.com/mikesimons/yaml-dsl/types"
 	//"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"

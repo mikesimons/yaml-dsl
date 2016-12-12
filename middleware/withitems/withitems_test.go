@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/mikesimons/yaml-dsl/middleware"
+	"github.com/mikesimons/yaml-dsl/middleware/withitems"
 	"github.com/mikesimons/yaml-dsl/parser"
-	"github.com/mikesimons/yaml-dsl/parser/middleware"
-	"github.com/mikesimons/yaml-dsl/parser/middleware/withitems"
 	"github.com/mikesimons/yaml-dsl/scripting/testparser"
 	"github.com/mikesimons/yaml-dsl/types"
 	. "github.com/onsi/ginkgo"

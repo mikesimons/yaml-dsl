@@ -3,7 +3,7 @@ package parser
 import (
 	"container/list"
 
-	"github.com/mikesimons/yaml-dsl/parser/middleware"
+	"github.com/mikesimons/yaml-dsl/middleware"
 	"github.com/mikesimons/yaml-dsl/types"
 )
 
