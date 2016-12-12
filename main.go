@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	commandAction "github.com/mikesimons/yaml-dsl/actions/command"
 	shellAction "github.com/mikesimons/yaml-dsl/actions/shell"
 	testAction "github.com/mikesimons/yaml-dsl/actions/test"
 	"github.com/mikesimons/yaml-dsl/middleware"
@@ -52,6 +53,7 @@ func main() {
 	parser.Middleware = []middleware.Middleware{
 		&withitems.Middleware{Dsl: parser},
 	}
+	parser.Handlers["command"] = commandAction.Prototype
 	parser.Handlers["shell"] = shellAction.Prototype
 	parser.Handlers["test"] = testAction.Prototype
 

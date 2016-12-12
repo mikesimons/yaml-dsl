@@ -1,11 +1,11 @@
 install-docker:
   unless: :docker.in_executable_path?
   actions:
-    - name: "Get file"
-      shell: "Download docker.#{item}.tgz"
+    - name: "List dir"
+      command: "/bin/ls -l #{item}"
       with_items:
-        - "x"
-        - "y"
+        - "/"
+        - "/home"
 
     - name: "Extract file"
       test: 'tar xf xyz #{item}'

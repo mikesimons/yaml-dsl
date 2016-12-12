@@ -17,6 +17,7 @@ type ScriptParser interface {
 // ActionResult is the common return value type for actions
 type ActionResult struct {
 	Success bool
+	Action  Handler
 	Result  map[string]interface{}
 }
 
