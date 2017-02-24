@@ -40,24 +40,24 @@ func (wim *Middleware) Execute(action types.Action, vars map[string]interface{},
 
 	// Get the list
 	var items []interface{}
-	if rawItems, hasItems := action.Data[middlewareKey]; hasItems {
-		value := reflect.ValueOf(rawItems)
-		switch value.Kind() {
-		case reflect.String:
-			result, err := wim.Dsl.ScriptParser.ParseExpression(rawItems.(string))
-			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("error parsing expression: %s", rawItems.(string)))
-			}
-			items = result.([]interface{})
-		case reflect.Slice:
-			items = rawItems.([]interface{})
-		default:
-			return nil, errors.New(fmt.Sprintf("invalid type for `%s` field", middlewareKey))
-		}
+	rawItems, hasItems := action.Data[middlewareKey]
+
+	if !hasItems {
+		return chain.Next(action, vars)
 	}
 
-	if len(items) == 0 {
-		items = append(items, "")
+	value := reflect.ValueOf(rawItems)
+	switch value.Kind() {
+	case reflect.String:
+		result, err := wim.Dsl.ScriptParser.ParseExpression(rawItems.(string))
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error parsing expression: %s", rawItems.(string)))
+		}
+		items = result.([]interface{})
+	case reflect.Slice:
+		items = rawItems.([]interface{})
+	default:
+		return nil, errors.New(fmt.Sprintf("invalid type for `%s` field", middlewareKey))
 	}
 
 	// Iterate the list
