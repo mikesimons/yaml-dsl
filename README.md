@@ -81,3 +81,15 @@ Access to the current item is available through the `item` variable.
   with_items: >
     "item1,item2,item3".split(",")
 ```
+### register
+The register middleware behaves like Ansible `register`. It stores the ActionResult struct for this action in to a variable in the scripting engine for later access.
+
+```
+- name: "Example of register"
+  command: "cat /etc/hosts"
+  register: hostsfile
+
+- name: "Debug output of hostsfile"
+  test: "Line: #{item}"
+  with_items: hostsfile["Result"]["stdout"].split("\n")
+```
