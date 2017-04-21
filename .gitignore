@@ -1,2 +1,4 @@
 *.coverprofile
 _reports/*
+libmruby.a
+yaml-dsl

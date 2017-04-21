@@ -1,11 +1,10 @@
 package mrubyparser
 
 import (
-	"reflect"
-
+	"encoding/json"
+	"fmt"
 	"github.com/mikesimons/yaml-dsl/types"
 	"github.com/mitchellh/go-mruby"
-	//"fmt"
 )
 
 type MrubyScriptParser struct {
@@ -15,7 +14,19 @@ type MrubyScriptParser struct {
 
 func New() types.ScriptParser {
 	mrb := mruby.NewMrb()
-	vs, _ := mrb.LoadString(`OpenStruct.new`)
+	vs, err := mrb.LoadString(`
+		o = OpenStruct.new
+		o.instance_eval do
+		  def set_from_json k, v
+			self[k] = YAML.load(v)
+		  end
+		end
+		o
+	`)
+
+	if err != nil {
+		panic(fmt.Sprintf("Error initializing var store: %s", err))
+	}
 
 	return &MrubyScriptParser{
 		mrb:  mrb,
@@ -23,12 +34,16 @@ func New() types.ScriptParser {
 	}
 }
 
+func (msp *MrubyScriptParser) Vars() {
+	msp.eval(`Proc.new { |val, vars| puts vars }`, `puts vars`)
+}
+
 func (msp *MrubyScriptParser) SetVar(key string, val interface{}) {
-	valValue := reflect.ValueOf(val)
-	switch valValue.Kind() {
-	case reflect.String:
-		msp.vars.Call("[]=", msp.mrb.StringValue(key), msp.mrb.StringValue(val.(string)))
+	data, err := json.Marshal(val)
+	if err != nil {
+		panic(fmt.Sprintf("Oh noes, JSON marshal error: %s", err))
 	}
+	msp.vars.Call("set_from_json", msp.mrb.StringValue(key), msp.mrb.StringValue(string(data)))
 }
 
 func (msp *MrubyScriptParser) SetVars(vars map[string]interface{}) {

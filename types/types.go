@@ -12,6 +12,7 @@ type ScriptParser interface {
 	ParseExpression(script string) (interface{}, error)
 	SetVars(vars map[string]interface{})
 	SetVar(key string, val interface{})
+	Vars()
 }
 
 // ActionResult is the common return value type for actions

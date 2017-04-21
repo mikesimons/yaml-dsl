@@ -1,11 +1,13 @@
 install-docker:
   unless: :docker.in_executable_path?
   actions:
-    - name: "List dir"
-      command: "/bin/ls -l #{item}"
-      with_items:
-        - "/"
-        - "/home"
+    - name: "Read items"
+      command: "cat items"
+      register: items
+
+    - name: "Print item #{item}"
+      test: "Printing #{item}"
+      with_items: items["Result"]["stdout"].split("\n")
 
     - name: "Extract file"
       test: 'tar xf xyz #{item}'
