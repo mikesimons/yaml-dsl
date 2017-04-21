@@ -43,7 +43,7 @@ actionList.Execute()
 It should be noted that with the possible exception of middleware fields, all script execution takes place just before the action is executed.
 The action itself does not need to (and at present can't) handle script execution.
 
-This allows* actions to reference variables that come from another action earlier in the action list. (*variable registration middleware currently not implemented)
+This allows* actions to reference variables that come from another action earlier in the action list.
   
 ## Actions
 
