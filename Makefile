@@ -1,5 +1,7 @@
+export CGO_LDFLAGS=-lyaml
+
 all: go-mruby
-	go build
+	go build -ldflags -s
 
 test:
 	ginkgo -r -cover
