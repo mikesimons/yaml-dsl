@@ -23,9 +23,11 @@ func (list *ActionList) InsertListAfter(otherList *ActionList, element *list.Ele
 func (list *ActionList) Execute() error {
 	vars := make(map[string]interface{})
 
+	var results []*types.ActionResult
 	for current := list.Front(); current != nil; current = current.Next() {
 		action := current.Value.(types.Action)
-		list.Middleware.Next(action, vars)
+		result, _ := list.Middleware.Next(action, vars)
+		results = append(results, result)
 		list.Middleware.Reset()
 	}
 

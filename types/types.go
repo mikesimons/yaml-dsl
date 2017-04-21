@@ -19,6 +19,7 @@ type ActionResult struct {
 	Success bool
 	Action  Handler
 	Result  map[string]interface{}
+	List    []*ActionResult
 }
 
 // HandlerPrototypeFunc is a type alias for the a function that should return new action instances

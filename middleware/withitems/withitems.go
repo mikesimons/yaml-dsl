@@ -80,5 +80,5 @@ func (wim *Middleware) Execute(action types.Action, vars map[string]interface{},
 
 	wim.Dsl.ScriptParser.SetVar(itemKey, "")
 
-	return &types.ActionResult{Success: true}, nil
+	return &types.ActionResult{Success: true, List: results}, nil
 }
